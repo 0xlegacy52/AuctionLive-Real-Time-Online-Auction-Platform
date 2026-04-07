@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  avatarUrl    String?
+  bio          String?
+  isVerified   Boolean   @default(false)
+  rating       Float     @default(0)
+  ratingCount  Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  auctions     Auction[]
+  bids         Bid[]
+  autoBids     AutoBid[]
+  watchlist    WatchlistItem[]
+  wonAuctions  AuctionResult[] @relation("winner")
+  ratingsGiven SellerRating[]  @relation("rater")
+  ratingsReceived SellerRating[] @relation("rated")
+}
+
+model Auction {
+  id              Int       @id @default(autoincrement())
+  title           String
+  description     String
+  category        String
+  condition       String
+  startingPrice   Float
+  reservePrice    Float?
+  buyNowPrice     Float?
+  currentPrice    Float
+  minIncrement    Float     @default(1)
+  shippingCost    Float     @default(0)
+  shippingMethod  String?
+  imageUrls       String[]
+  status          String    @default("active")
+  startTime       DateTime  @default(now())
+  endTime         DateTime
+  originalEndTime DateTime
+  bidCount        Int       @default(0)
+  viewCount       Int       @default(0)
+
+  sellerId        Int
+  seller          User      @relation(fields: [sellerId], references: [id])
+  currentWinnerId Int?
+
+  bids            Bid[]
+  autoBids        AutoBid[]
+  watchlist       WatchlistItem[]
+  result          AuctionResult?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Bid {
+  id        Int      @id @default(autoincrement())
+  amount    Float
+  isAutoBid Boolean  @default(false)
+
+  auctionId Int
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+
+  bidderId  Int
+  bidder    User     @relation(fields: [bidderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model AutoBid {
+  id       Int     @id @default(autoincrement())
+  maxBid   Float
+  isActive Boolean @default(true)
+
+  auctionId Int
+  auction   Auction @relation(fields: [auctionId], references: [id])
+
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([auctionId, userId])
+}
+
+model WatchlistItem {
+  id        Int      @id @default(autoincrement())
+
+  auctionId Int
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([auctionId, userId])
+}
+
+model AuctionResult {
+  id           Int      @id @default(autoincrement())
+  finalPrice   Float
+  platformFee  Float
+  sellerPayout Float
+  status       String   @default("pending_payment")
+  paidAt       DateTime?
+
+  auctionId    Int      @unique
+  auction      Auction  @relation(fields: [auctionId], references: [id])
+
+  winnerId     Int
+  winner       User     @relation("winner", fields: [winnerId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SellerRating {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+
+  raterId   Int
+  rater     User     @relation("rater", fields: [raterId], references: [id])
+
+  ratedId   Int
+  rated     User     @relation("rated", fields: [ratedId], references: [id])
+
+  auctionId Int
+
+  createdAt DateTime @default(now())
+}
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+}
