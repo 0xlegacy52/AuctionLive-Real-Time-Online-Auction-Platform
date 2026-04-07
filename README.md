@@ -6,7 +6,7 @@ AuctionLive is a real-time online auction platform where users list items with a
 ## Tech Stack
 - **Backend**: Node.js + Express + TypeScript (served on port 5000)
 - **Frontend**: React 18 + Vite + Tailwind CSS (SPA, built to `dist/public/`)
-- **Database**: PostgreSQL (Replit built-in) + Prisma ORM
+- **Database**: PostgreSQL + Prisma ORM
 - **Real-time**: Socket.io (live bid updates, countdown sync)
 - **Auth**: Express sessions + bcryptjs
 
